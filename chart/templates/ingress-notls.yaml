@@ -1,0 +1,25 @@
+{{ if and (.Values.service.ingress.enabled) (.Values.subDomain) }}
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: "{{ template "cluster-info.fullname" . }}-notls"
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    {{- include "cluster-info.labels" . | indent 4 }}
+  annotations:
+    kubernetes.io/ingress.class: "{{ .Values.service.ingress.class}}"
+    external-dns.alpha.kubernetes.io/hostname: "{{ include "cluster-info.fqdn" . }}"
+    {{- range $key, $value := .Values.service.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  rules:
+  - host: "{{ include "cluster-info.fqdn" . }}"
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: {{ template "cluster-info.fullname" . }}
+          servicePort: {{ .Values.service.externalPort }}
+{{ end }}

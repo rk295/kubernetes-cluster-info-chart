@@ -1,0 +1,34 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "cluster-info.fullname" . }}
+  labels: 
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    {{- include "cluster-info.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels: 
+        {{- include "cluster-info.labels" . | indent 8 }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: clusterinfoport
+          containerPort: {{ .Values.service.internalPort }}
+        readinessProbe:
+          tcpSocket:
+            port: clusterinfoport
+          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds}}
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+        livenessProbe:
+          tcpSocket:
+            port: clusterinfoport
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}

@@ -1,0 +1,40 @@
+1. Get the application URL by running these commands:
+
+{{- if .Values.service.type }}
+{{- if contains "NodePort" .Values.service.type }}
+
+  These commands will help you find the PORT and IP of your service:
+  
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ template "cluster-info.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+ 
+{{- else if contains "LoadBalancer" .Values.service.type }}
+
+    NOTE: It takes a couple of minutes for AWS to return an ELB endpoint.
+    You can watch the status of by running 'kubectl get svc -w {{ template "cluster-info.fullname" . }} --namespace={{ .Release.Namespace }}'
+
+{{- if .Values.subDomain }}
+
+    Visit the deployed app at http://{{ include "cluster-info.fqdn" . }}/
+{{- else }}
+
+    export SERVICE_URL=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ template "cluster-info.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    
+    Visit the deployed app at http://$SERVICE_URL:{{ .Values.service.externalPort }}/
+
+{{- end }}
+
+{{- else if contains "ClusterIP"  .Values.service.type }}
+
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "cluster-info.fullname" . }}" -o jsonpath="{.items[0].metadata.name}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl port-forward $POD_NAME 8080:{{ .Values.service.externalPort }}
+{{- end }}
+
+{{- else if .Values.service.ingress.tlsEnabled }}
+
+    Visit the deployed app at https://{{ include "cluster-info.fqdn" . }}/
+{{- else if .Values.service.ingress.enabled }}
+
+    Visit the deployed app at http://{{ include "cluster-info.fqdn" . }}/
+{{- end }}

@@ -1,0 +1,52 @@
+# Number of replicas to maintain
+replicaCount: 1
+
+# Must set this if you want to enable external-dns or ingress
+subDomain: ""
+
+# Which container to pull
+image:
+  # repository:
+  name: rk295/kubernetes-cluster-info
+  tag: latest
+  pullPolicy: Always
+
+# The type of service to deploy
+service:
+  # LoadBalancer, NodePort or nothing for a headless service
+  # type: LoadBalancer
+  externalPort: 80
+  internalPort: 80
+
+  ingress:
+    class: nginx
+    enabled: false
+    tlsEnabled: false
+    # If we are to deploy with tls, should we include the kube-lego 
+    # annotation. defaults to true to maintain backward compatibility.
+    kubeLego: false
+    tlsSecretName: ""
+    # annotations:
+    # If you require whitelisting, insert it here. Comma separated list of CIDR
+    # blocks.
+    #   ingress.kubernetes.io/whitelist-source-range: "1.1.1.0/24"
+
+# Probe delays and periods, the only probe available to us from the Ziggy app
+# is a TCP port probe. A ticket is with dev to add a better health check
+# endpoint.
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 10
+livenessProbe:
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+# Specify any pod resources here. These defaults have been derived from
+# some degree of real user testing. These ideally need validating further.
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: "100m"
+  limits:
+    memory: "128Mi"
+    cpu: "250m"
